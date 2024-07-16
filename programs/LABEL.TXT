@@ -1,0 +1,9 @@
+
+
+ADDI $a0 $0 22
+ADDI $a1 $0 34
+J isEqual
+isEqual:
+SUB $v0 $a0 $a1
+end:
+J end

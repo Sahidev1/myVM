@@ -1,0 +1,8 @@
+ADDI $ra $0 3
+ADDI $s0 $0 6
+JR $s0
+ADDI $s1 $s1 2 
+NOP
+NOP 
+ADDI $s1 $0 7
+JR $ra

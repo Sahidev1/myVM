@@ -1,4 +1,5 @@
 import argparse
+import re
 
 Rops = {
     'OR':'00000000',
@@ -41,6 +42,8 @@ JopsMSB = {
     'JALR':'0111',
 }
 
+LabelOps= {'J', 'JAL'}
+
 regMap = {
     '$0':'0000',
     '$v0': '0001',
@@ -50,7 +53,7 @@ regMap = {
     '$a2': '0101',
     '$t0': '0110',
     '$t1': '0111',
-    '$t2': '1000',
+    '$at': '1000', # Assembler temporary
     '$s0': '1001',
     '$s1': '1010',
     '$s2': '1011',
@@ -59,6 +62,11 @@ regMap = {
     '$fp': '1110',
     '$ra': '1111',
 }
+
+
+
+NOP_CODE = 'SLL $0 $0 $0'
+
 
 def to_32bit(v):
     return v & 0xFFFFFFFF
@@ -70,6 +78,21 @@ def parseBin(bin):
 
 def mapToRegV(reg):
     return parseBin(regMap[reg])
+
+
+def handleLabelOp(instr, labelMap):
+    iPart = instr.split()
+    retCode = ''
+    if (iPart[0] == 'J'):
+        retCode = assemble_instruction(f'')
+        retCode = assemble_instruction(f'JR $ra {labelMap[iPart[1]]}')
+
+
+
+def instructionScanner(instr, labelMap):
+    iPart = instr.split()
+    if (iPart[0] in LabelOps):
+
 
 
 def assemble_instruction(instr):
@@ -97,6 +120,9 @@ def assemble_instruction(instr):
         hx <<= 4
         hx |= mapToRegV(iPart[3])
         hx <<= 12
+        
+    elif(iPart[0] == 'NOP'):
+        return assemble_instruction(NOP_CODE)
     else :
         print('Invalid instruction')
         exit(1)
@@ -111,12 +137,23 @@ def readInstructionsFromFile(fileName):
         lines = f.readlines()
         return lines
     
+
+def labelMapper(lines):
+    labelMap = {}
+    lineNum = 0
+    for line in lines:
+        lineNum += 1
+        if(re.match(r".+:$",line.strip())[0]): 
+            labelMap[line.strip()[:-1]] = len(lineNum)
+    return labelMap
+
 args = argparse.ArgumentParser()
 args.add_argument('input', help='Input file')
 
 args = args.parse_args()
 if args.input:
     lines = readInstructionsFromFile(args.input)
+    labelMap = labelMapper(lines)
     print('v2.0 raw')
     for line in lines:
         print(assemble_instruction(line))
