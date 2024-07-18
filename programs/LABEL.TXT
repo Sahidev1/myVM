@@ -1,5 +1,3 @@
-
-
 ADDI $a0 $0 22
 ADDI $a1 $0 34
 J isEqual

@@ -14,6 +14,8 @@ Rops = {
     'SRA': '00001001',
     'SLT': '00001010',
     'XNOR': '00001011',
+    'MUL': '00001101',
+    'DIV': '00001110',
 }
 
 Iops = {
@@ -29,6 +31,8 @@ Iops = {
     'SRAI': '00011001',
     'SLTI': '00011010',
     'XNORI': '00011011',
+    'MULI': '00011101',
+    'DIVI': '00011110',
     'LB': '00100101',
     'SB': '00110101',
     'LW': '01000101',
@@ -66,6 +70,7 @@ regMap = {
 
 
 NOP_CODE = 'SLL $0 $0 $0'
+LUI_OPCODE = '00011100'
 
 
 def to_32bit(v):
@@ -84,14 +89,20 @@ def handleLabelOp(instr, labelMap):
     iPart = instr.split()
     retCode = ''
     if (iPart[0] == 'J'):
-        retCode = assemble_instruction(f'')
-        retCode = assemble_instruction(f'JR $ra {labelMap[iPart[1]]}')
-
+        label = iPart[1]
+        lv = labelMap[label] + 1
+        retCode = assemble_instruction(f'LUI $at {lv>>16}') + '\n'
+        retCode += assemble_instruction(f'ORI $at $at {lv&0xFFFF}') + '\n'
+        retCode += assemble_instruction(f'JR $at')
+    return retCode
 
 
 def instructionScanner(instr, labelMap):
     iPart = instr.split()
     if (iPart[0] in LabelOps):
+        return handleLabelOp(instr, labelMap)
+    else:
+        return assemble_instruction(instr)
 
 
 
@@ -120,11 +131,18 @@ def assemble_instruction(instr):
         hx <<= 4
         hx |= mapToRegV(iPart[3])
         hx <<= 12
-        
+    
+    elif(iPart[0] == 'LUI'):
+        hx |= parseBin(LUI_OPCODE)
+        hx <<= 4
+        hx |= mapToRegV(iPart[1])
+        hx <<= 20
+        hx |= int(iPart[2])
+
     elif(iPart[0] == 'NOP'):
         return assemble_instruction(NOP_CODE)
     else :
-        print('Invalid instruction')
+        print('instruction: ' + instr.split('\n')[0] + ' is invalid instruction')
         exit(1)
     
 
@@ -143,8 +161,8 @@ def labelMapper(lines):
     lineNum = 0
     for line in lines:
         lineNum += 1
-        if(re.match(r".+:$",line.strip())[0]): 
-            labelMap[line.strip()[:-1]] = len(lineNum)
+        if re.match(r"(.+):$", line.strip()):
+            labelMap[line.strip()[:-1]] = to_32bit(lineNum)
     return labelMap
 
 args = argparse.ArgumentParser()
@@ -156,7 +174,9 @@ if args.input:
     labelMap = labelMapper(lines)
     print('v2.0 raw')
     for line in lines:
-        print(assemble_instruction(line))
+        if line.strip()[:-1] in labelMap:
+            continue
+        print(instructionScanner(line, labelMap))
 else :
     print('No input file provided')
     exit(1)
