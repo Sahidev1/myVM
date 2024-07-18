@@ -1,0 +1,8 @@
+JAL nopper
+ADDI $a0 $0 7
+J end
+nopper:
+    NOP
+    JR $ra
+end:
+    J end

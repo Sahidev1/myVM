@@ -1,6 +1,12 @@
 import argparse
 import re
 
+PC = 0
+INSTRUCTIONS = []
+LABELMAP = {}
+MAXLABELPC = 0
+INSERTFLAG = False
+
 Rops = {
     'OR':'00000000',
     'AND':'00000001',
@@ -85,26 +91,35 @@ def mapToRegV(reg):
     return parseBin(regMap[reg])
 
 
-def handleLabelOp(instr, labelMap):
+def handleLabelOp(instr):
     iPart = instr.split()
-    retCode = ''
+    lv = 0
     if (iPart[0] == 'J'):
         label = iPart[1]
-        lv = labelMap[label] + 1
-        retCode = assemble_instruction(f'LUI $at {lv>>16}') + '\n'
-        retCode += assemble_instruction(f'ORI $at $at {lv&0xFFFF}') + '\n'
-        retCode += assemble_instruction(f'JR $at')
-    return retCode
+        lv = LABELMAP[label]
+        assemble_instruction(f'LUI $at {lv>>16}')
+        assemble_instruction(f'ORI $at $at {lv&0xFFFF}')
+        assemble_instruction(f'JR $at')
+    elif (iPart[0] == 'JAL'):
+        label = iPart[1]
+        lv = LABELMAP[label]
+        assemble_instruction(f'LUI $at {lv>>16}')
+        assemble_instruction(f'ORI $at $at {lv&0xFFFF}')
+        assemble_instruction(f'JALR $at $ra')
+    else :
+        print('instruction: ' + instr.split('\n')[0] + ' is invalid instruction')
+        exit(1)
 
 
-def instructionScanner(instr, labelMap):
+def instructionScanner(instr):
     iPart = instr.split()
     if (iPart[0] in LabelOps):
-        return handleLabelOp(instr, labelMap)
+        handleLabelOp(instr)
     else:
-        return assemble_instruction(instr)
+        assemble_instruction(instr)
 
-
+def isLabel(instr):
+    return instr.split(':')[0] in LABELMAP
 
 def assemble_instruction(instr):
     iPart = instr.split()
@@ -113,7 +128,9 @@ def assemble_instruction(instr):
         hx |= parseBin(JopsMSB[iPart[0]])
         hx = hx<<8
         hx |= mapToRegV(iPart[1])
-        hx = hx<<20
+        hx <<= 4 
+        hx |= 0 if iPart[0] == 'JR' else mapToRegV(iPart[2])
+        hx = hx<<16
     elif (iPart[0] in Iops):
         hx |= parseBin(Iops[iPart[0]])
         hx <<= 4
@@ -140,43 +157,83 @@ def assemble_instruction(instr):
         hx |= int(iPart[2])
 
     elif(iPart[0] == 'NOP'):
-        return assemble_instruction(NOP_CODE)
+        assemble_instruction(NOP_CODE)
+        return
     else :
         print('instruction: ' + instr.split('\n')[0] + ' is invalid instruction')
         exit(1)
     
 
     hxform = f'{hx:08x}'
-    return hxform
+    if (INSERTFLAG):
+        INSTRUCTIONS.insert(0, hxform)
+    else:
+        INSTRUCTIONS.append(hxform)
+    if (mapAsm):
+        print(f'{hxform} : {instr}')
+    global PC
+    PC += 1
 
 
-def readInstructionsFromFile(fileName):
+def readLineByLINE(fileName):
     with open(fileName) as f:
         lines = f.readlines()
         return lines
+def readAll(fileName):
+    with open(fileName) as f:
+        lines = f.read()
+        return lines
     
+def scanLabelInstructions(lines_str):
+    matches = re.findall(r'^\w+:\n(?:\s{4}[\w \$]+\n?)+', lines_str, re.MULTILINE)
+    for match in matches:
+        label = match.split(':')[0]
+        instructions = match.split(':')[1].lstrip().rstrip().split('\n')
+        LABELMAP[label] = PC
+        for instruction in instructions:
+            #print('instr: '+instruction)
+            instructionScanner(instruction)
+    global MAXLABELPC
+    MAXLABELPC = PC
+    
+        
+def scanInstructions(lines):
+    i = 0    
+    while i < len(lines):
+        if (isLabel(lines[i])):
+            i += 1
+            while (i < len(lines) and re.match(r'\s{4}.*', lines[i])):
+                i += 1
+            continue
+        instructionScanner(lines[i])
+        i += 1 
 
-def labelMapper(lines):
-    labelMap = {}
-    lineNum = 0
-    for line in lines:
-        lineNum += 1
-        if re.match(r"(.+):$", line.strip()):
-            labelMap[line.strip()[:-1]] = to_32bit(lineNum)
-    return labelMap
 
 args = argparse.ArgumentParser()
 args.add_argument('input', help='Input file')
+args.add_argument('-m', action='store_true', help='Check for option -m')
+# i want args parser to check for option -m, please write the code to do it below
 
+mapAsm = False
 args = args.parse_args()
+if args.m:
+    mapAsm = True
 if args.input:
-    lines = readInstructionsFromFile(args.input)
-    labelMap = labelMapper(lines)
-    print('v2.0 raw')
-    for line in lines:
-        if line.strip()[:-1] in labelMap:
-            continue
-        print(instructionScanner(line, labelMap))
+    lines = readLineByLINE(args.input)
+    lineStr = readAll(args.input)
+    PC += 3
+    scanLabelInstructions(lineStr)
+    scanInstructions(lines)
+    INSERTFLAG = True
+    assemble_instruction(f'JR $at')
+    assemble_instruction(f'ORI $at $at {MAXLABELPC & 0xFFFF}')
+    assemble_instruction(f'LUI $at {MAXLABELPC >> 16}')
+
+    if (not mapAsm):
+        print('v2.0 raw')
+        for instr in INSTRUCTIONS:
+            print(instr)
+
 else :
     print('No input file provided')
     exit(1)
