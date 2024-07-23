@@ -1,0 +1,14 @@
+ADDI $sp $0 200
+ADDI $a0 $0 0
+JAL incr
+ADDI $a0 $v0 0
+JAL incr
+ADDI $s0 $v0 0
+SW $s0 $sp 0
+J end
+incr:
+    ADDI $v0 $a0 1
+    JR $ra
+end:
+    J end 
+    

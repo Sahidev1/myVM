@@ -1,0 +1,14 @@
+ADDI $sp $0 200
+ADDI $s0 $0 22
+ADDI $t0 $0 0
+J check
+check:
+    BEQL $s0 $t0 finished
+    ADDI $t0 $t0 1
+    J check
+finished:
+    MUL $v0 $s0 $t0
+    SW $v0 $sp 0
+    J end
+end:
+    J end

@@ -6,6 +6,8 @@ INSTRUCTIONS = []
 LABELMAP = {}
 MAXLABELPC = 0
 INSERTFLAG = False
+LABELINSTRUCTIONS={}
+MACHINECODEMAP = {}
 
 Rops = {
     'OR':'00000000',
@@ -78,7 +80,14 @@ regMap = {
 NOP_CODE = 'SLL $0 $0 $0'
 LUI_OPCODE = '00011100'
 
-
+def typeConverter(immStr):
+    if (re.match(r"^0x[1-9a-f][0-9a-f]{0,3}$", immStr)):
+        return int(immStr, 16)
+    if (re.match(r"^'\w'$", immStr)):
+        return ord(immStr.strip("'"))
+    else :
+        return int(immStr)
+    
 
 def to_32bit(v):
     return v & 0xFFFFFFFF
@@ -116,6 +125,29 @@ def handleLabelOp(instr):
         print('instruction: ' + instr.split('\n')[0] + ' is invalid instruction')
         exit(1)
 
+def handleBodyLabelOp(instr, pc):
+    iPart = instr.split()
+    lv = 0
+    if (iPart[0] == 'J'):
+        label = iPart[1]
+        lv = LABELMAP[label]
+        assemble_instruction(f'LUI $at {lv>>16}', pc, False)
+        assemble_instruction(f'ORI $at $at {lv&0xFFFF}', pc+1, False)
+        assemble_instruction(f'JR $at', pc+2, False)
+    elif (iPart[0] == 'JAL'):
+        label = iPart[1]
+        lv = LABELMAP[label]
+        assemble_instruction(f'LUI $at {lv>>16}', pc, False)
+        assemble_instruction(f'ORI $at $at {lv&0xFFFF}', pc+1, False)
+        assemble_instruction(f'JALR $at $ra', pc+2, False)
+    elif (iPart[0] == 'BEQL' or iPart[0] == 'BNEL'):
+        label = iPart[3]
+        lv = LABELMAP[label]
+        offset = lv - pc
+        assemble_instruction(f'{iPart[0][:-1]} {iPart[1]} {iPart[2]} {offset}', pc, False)
+    else :
+        print('instruction: ' + instr.split('\n')[0] + ' is invalid instruction')
+        exit(1)
 
 def instructionScanner(instr):
     iPart = instr.split()
@@ -124,10 +156,30 @@ def instructionScanner(instr):
     else:
         assemble_instruction(instr)
 
+def bodyScanner(instr, pc):
+    iPart = instr.split()
+    global INSERTFLAG
+    INSERTFLAG = True
+    if (iPart[0] in LabelOps):
+        handleBodyLabelOp(instr, pc)
+    else:
+        assemble_instruction(instr, pc, False)
+    INSERTFLAG = False
+
+def calculateLabelInstr(instr):
+    iPart = instr.split()
+    if (iPart[0] in LabelOps):
+        if (iPart[0] == 'J' or iPart[0] == 'JAL'):
+            return 3
+        else: 
+            return 1
+    else:
+        return 1
+
 def isLabel(instr):
     return instr.split(':')[0] in LABELMAP
 
-def assemble_instruction(instr):
+def assemble_instruction(instr, insertAt=0, incrementPC=True):
     iPart = instr.split()
     hx = to_32bit(0)
     if (iPart[0] in JopsMSB):
@@ -144,7 +196,7 @@ def assemble_instruction(instr):
         hx <<= 4
         hx |= mapToRegV(iPart[2])
         hx <<= 16
-        hx |= int(iPart[3])
+        hx |= typeConverter(iPart[3])
     elif(iPart[0] in Rops):
         hx |= parseBin(Rops[iPart[0]])
         hx <<= 4
@@ -160,7 +212,7 @@ def assemble_instruction(instr):
         hx <<= 4
         hx |= mapToRegV(iPart[1])
         hx <<= 20
-        hx |= int(iPart[2])
+        hx |= typeConverter(iPart[2])
 
     elif(iPart[0] == 'NOP'):
         assemble_instruction(NOP_CODE)
@@ -172,13 +224,14 @@ def assemble_instruction(instr):
 
     hxform = f'{hx:08x}'
     if (INSERTFLAG):
-        INSTRUCTIONS.insert(0, hxform)
+            INSTRUCTIONS[insertAt] = hxform
     else:
         INSTRUCTIONS.append(hxform)
     if (mapAsm):
-        print(f'{hxform} : {instr}')
+        MACHINECODEMAP[hxform] = instr.split('\n')[0].lstrip()
     global PC
-    PC += 1
+    if incrementPC:
+        PC += 1
 
 
 def readLineByLINE(fileName):
@@ -196,12 +249,25 @@ def scanLabelInstructions(lines_str):
         label = match.split(':')[0]
         instructions = match.split(':')[1].lstrip().rstrip().split('\n')
         LABELMAP[label] = PC
+        nrLines = 0
+        baseVal = to_32bit(0)
+        LABELINSTRUCTIONS[label]=instructions
         for instruction in instructions:
             #print('instr: '+instruction)
-            instructionScanner(instruction)
+            #instructionScanner(instruction)
+            nrLines += calculateLabelInstr(instruction)
+        for i in range(nrLines):
+            assemble_instruction('NOP')
     global MAXLABELPC
     MAXLABELPC = PC
-    
+
+def evalLabelBodies():
+    for label, pc in LABELMAP.items():
+        instructions = LABELINSTRUCTIONS[label]
+        for instruction in instructions:
+            bodyScanner(instruction, pc)
+            pc += calculateLabelInstr(instruction)
+        
         
 def scanInstructions(lines):
     i = 0    
@@ -227,18 +293,27 @@ if args.m:
 if args.input:
     lines = readLineByLINE(args.input)
     lineStr = readAll(args.input)
-    PC += 3
+    for i in range(3):
+        assemble_instruction('NOP')
     scanLabelInstructions(lineStr)
+
+    evalLabelBodies()
+
     scanInstructions(lines)
     INSERTFLAG = True
-    assemble_instruction(f'JR $at')
-    assemble_instruction(f'ORI $at $at {MAXLABELPC & 0xFFFF}')
-    assemble_instruction(f'LUI $at {MAXLABELPC >> 16}')
+    assemble_instruction(f'JR $at', 2, False)
+    assemble_instruction(f'ORI $at $at {MAXLABELPC & 0xFFFF}', 1, False)
+    assemble_instruction(f'LUI $at {MAXLABELPC >> 16}', 0, False)
 
     if (not mapAsm):
         print('v2.0 raw')
         for instr in INSTRUCTIONS:
             print(instr)
+    else:
+        pc = 0
+        for instr in INSTRUCTIONS:
+            print(f'PC: {pc}, {instr} : {MACHINECODEMAP[instr]}')
+            pc += 1
 
 else :
     print('No input file provided')

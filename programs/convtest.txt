@@ -1,0 +1,4 @@
+ADDI $t0 $0 0x16
+ADDI $s0 $0 'b'
+SLLI $s0 $s0 8
+ADDI $s0 $0 'a'
