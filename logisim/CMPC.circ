@@ -490,7 +490,7 @@
       <rect fill="none" height="80" stroke="#000000" stroke-width="2" width="60" x="50" y="50"/>
       <circ-port height="8" pin="1080,360" width="8" x="46" y="56"/>
       <circ-port height="10" pin="1190,590" width="10" x="105" y="65"/>
-      <circ-port height="8" pin="440,80" width="8" x="66" y="46"/>
+      <circ-port height="8" pin="440,90" width="8" x="66" y="46"/>
       <circ-port height="8" pin="170,310" width="8" x="46" y="116"/>
       <circ-port height="8" pin="340,90" width="8" x="96" y="46"/>
       <circ-port height="8" pin="1220,750" width="8" x="46" y="66"/>
@@ -596,6 +596,7 @@
     <wire from="(340,1170)" to="(380,1170)"/>
     <wire from="(240,510)" to="(330,510)"/>
     <wire from="(340,220)" to="(370,220)"/>
+    <wire from="(440,90)" to="(440,200)"/>
     <wire from="(780,490)" to="(870,490)"/>
     <wire from="(790,740)" to="(880,740)"/>
     <wire from="(200,90)" to="(220,90)"/>
@@ -714,7 +715,6 @@
     <wire from="(610,550)" to="(750,550)"/>
     <wire from="(610,1030)" to="(750,1030)"/>
     <wire from="(900,530)" to="(980,530)"/>
-    <wire from="(440,80)" to="(440,200)"/>
     <wire from="(880,600)" to="(880,740)"/>
     <wire from="(760,180)" to="(760,190)"/>
     <wire from="(760,900)" to="(760,910)"/>
@@ -806,6 +806,11 @@
       <a name="width" val="32"/>
       <a name="label" val="$0"/>
     </comp>
+    <comp lib="0" loc="(440,90)" name="Pin">
+      <a name="facing" val="south"/>
+      <a name="tristate" val="false"/>
+      <a name="label" val="Clock"/>
+    </comp>
     <comp lib="4" loc="(780,340)" name="Register">
       <a name="width" val="32"/>
       <a name="label" val="$a0"/>
@@ -821,11 +826,6 @@
     <comp lib="1" loc="(400,330)" name="AND Gate">
       <a name="size" val="30"/>
       <a name="inputs" val="2"/>
-    </comp>
-    <comp lib="0" loc="(440,80)" name="Pin">
-      <a name="facing" val="south"/>
-      <a name="tristate" val="false"/>
-      <a name="label" val="Clock"/>
     </comp>
     <comp lib="4" loc="(780,1150)" name="Register">
       <a name="width" val="32"/>
@@ -868,7 +868,7 @@
     <comp lib="0" loc="(1080,360)" name="Pin">
       <a name="width" val="4"/>
       <a name="tristate" val="false"/>
-      <a name="label" val="reg1"/>
+      <a name="label" val="Source"/>
     </comp>
     <comp lib="1" loc="(400,1040)" name="AND Gate">
       <a name="size" val="30"/>
@@ -901,7 +901,7 @@
       <a name="facing" val="west"/>
       <a name="width" val="4"/>
       <a name="tristate" val="false"/>
-      <a name="label" val="reg2"/>
+      <a name="label" val="Target"/>
       <a name="labelloc" val="east"/>
     </comp>
     <comp lib="1" loc="(390,690)" name="AND Gate">
@@ -941,7 +941,7 @@
       <a name="facing" val="west"/>
       <a name="output" val="true"/>
       <a name="width" val="32"/>
-      <a name="label" val="reg1Val"/>
+      <a name="label" val="RSval"/>
       <a name="labelloc" val="east"/>
     </comp>
     <comp lib="1" loc="(400,270)" name="AND Gate">
@@ -966,7 +966,7 @@
       <a name="facing" val="north"/>
       <a name="output" val="true"/>
       <a name="width" val="32"/>
-      <a name="label" val="reg2Val"/>
+      <a name="label" val="RTval"/>
       <a name="labelloc" val="east"/>
     </comp>
     <comp lib="1" loc="(410,170)" name="AND Gate">
@@ -980,7 +980,7 @@
     <comp lib="0" loc="(200,90)" name="Pin">
       <a name="width" val="4"/>
       <a name="tristate" val="false"/>
-      <a name="label" val="DestReg"/>
+      <a name="label" val="Destination"/>
     </comp>
   </circuit>
   <circuit name="ALU">
@@ -1102,10 +1102,10 @@
     <wire from="(250,630)" to="(300,630)"/>
     <wire from="(300,200)" to="(350,200)"/>
     <wire from="(340,600)" to="(390,600)"/>
-    <wire from="(290,510)" to="(290,520)"/>
     <wire from="(300,680)" to="(300,690)"/>
     <wire from="(560,810)" to="(560,880)"/>
     <wire from="(650,820)" to="(710,820)"/>
+    <wire from="(290,510)" to="(290,520)"/>
     <wire from="(580,830)" to="(580,900)"/>
     <wire from="(580,610)" to="(620,610)"/>
     <wire from="(370,830)" to="(370,850)"/>
@@ -1151,8 +1151,8 @@
     <wire from="(960,500)" to="(1020,500)"/>
     <wire from="(250,360)" to="(250,630)"/>
     <wire from="(250,200)" to="(300,200)"/>
-    <wire from="(290,520)" to="(290,530)"/>
     <wire from="(150,350)" to="(150,810)"/>
+    <wire from="(290,520)" to="(290,530)"/>
     <wire from="(330,520)" to="(330,540)"/>
     <wire from="(540,380)" to="(770,380)"/>
     <wire from="(940,260)" to="(940,480)"/>
@@ -1326,6 +1326,9 @@
       <a name="selloc" val="tr"/>
       <a name="width" val="32"/>
       <a name="enable" val="false"/>
+    </comp>
+    <comp lib="6" loc="(426,245)" name="Text">
+      <a name="text" val="ALU mux decoder"/>
     </comp>
     <comp lib="0" loc="(120,350)" name="Pin">
       <a name="width" val="32"/>
