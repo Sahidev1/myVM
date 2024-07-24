@@ -53,3 +53,114 @@ When both least significant bits are set:
 | 101-111        | DONT CARE (undefined operation) |
 
 ![ALU overview](readmefiles/ALU.png)
+
+
+# Assembly language 
+
+Below is the register mapping: 
+
+| Name | Number | Description                                                            |
+|------|--------|------------------------------------------------------------------------|
+| $0   | 0      | Zero register (recommended to always keep this register at constant 0) |
+| $v0  | 1      | Return value register, put function return value in this register      |
+| $v1  | 2      | *                                                                      |
+| $a0  | 3      | Argument register, put arguments to function calls here                |
+| $a1  | 4      | *                                                                      |
+| $a2  | 5      | *                                                                      |
+| $t0  | 6      | Temporary value register                                               |
+| $t1  | 7      | *                                                                      |
+| $at  | 8      | assembler temporary                                                    |
+| $s0  | 9      | Saved temporary                                                        |
+| $s1  | 10     | *                                                                      |
+| $s2  | 11     | *                                                                      |
+| $gp  | 12     | global pointer                                                         |
+| $sp  | 13     | stack pointer                                                          |
+| $fp  | 14     | frame pointer                                                          |
+| $ra  | 15     | Return address, holds return address after function call               |
+
+Note that these 16 registers are essentially general purpose, you can use them as you want but above is the standard way of using them. If you use them differently might've have to alter assembler or use no labels. 
+
+R type instructions follow this format: 
+
+| bits 24-31 | bits 20-23 | bits 16-19 | bits 12-15 | bits 0-11 |
+|------------|------------|------------|------------|-----------|
+| OPCODE     | RD         | RS         | RT         | DONT CARE |
+
+Supported R type instructions:
+
+| Operation | Opcode   | Notes/example                                                                                                      |
+|-----------|----------|--------------------------------------------------------------------------------------------------------------------|
+| OR        | 00000000 | OR $s0 $t0 $t1 <-> $s0_val = $t0_val bitwiseOR $t1_val                                                             |
+| AND       | 00000001 |                                                                                                                    |
+| XOR       | 00000010 |                                                                                                                    |
+| NOR       | 00000011 |                                                                                                                    |
+| NAND      | 00000100 |                                                                                                                    |
+| ADD       | 00000101 |                                                                                                                    |
+| SUB       | 00000110 | RD_val = RS_val - RT_val                                                                                           |
+| SLL       | 00000111 | The shift by value is in RT register, note that it only uses 5 least significant bits in RT register               |
+| SRL       | 00001000 | *                                                                                                                  |
+| SRA       | 00001001 | *                                                                                                                  |
+| SLT       | 00001010 | SLT $s2 $s1 $s0 <-> if $s1 < $s0 then 1 else 0                                                                     |
+| XNOR      | 00001011 |                                                                                                                    |
+| MUL       | 00001101 | Takes 16 least signifcant bits in RS_val and RT_val and multiplies, RD_val is resulting 32 bit product             |
+| DIV       | 00001110 | Takes 16 least signifcant bits in RS_val and RT_val and divides, RD_val 16 LSb is Quotient and 16 MSb is Remainder |
+
+I type instructions follow this format: 
+
+| bits 24-31 | bits 20-23 | bits 16-19 | bits 0-15       |
+|------------|------------|------------|-----------------|
+| OPCODE     | RD         | RS         | Immediate value |
+
+Supported I type instructions:
+
+| Operation | Opcode      | Notes/examples                                                          |
+|-----------|-------------|-------------------------------------------------------------------------|
+| ORI       | 00010000    | ORI $s0 $t0 231 <-> $s0_val = $t0_val bitwise OR 231                    |
+| ANDI      | 00010001    |                                                                         |
+| XORI      | 00010010    |                                                                         |
+| NORI      | 00010011    |                                                                         |
+| NANDI     | 00010100    |                                                                         |
+| ADDI      | 00010101    |                                                                         |
+| SUBI      | 00010110    |                                                                         |
+| SLLI      | 00010111    |                                                                         |
+| SRLI      | 00011000    |                                                                         |
+| SRAI      | 00011001    |                                                                         |
+| SLTI      | 00011010    |                                                                         |
+| XNORI     | 00011011    |                                                                         |
+| MULI      | 00011101    |                                                                         |
+| DIVI      | 00011110    |                                                                         |
+| LB        | 00100101    | LB $s0 $t0 3 <-> Load the byte in mem_addr=$t0_val + 3 into $s0         |
+| SB        | 00110101    | SB $s0 $t0 3 <-> Store byte in $s0 in mem_addr=$t0_val + 3              |
+| LW        | 01000101    | LW $s0 $t0 8 <-> Load the word in mem_addr=$t0_val + 8 into $s0         |
+| SW        | 01010101    | SW $s0 $t0 8 <-> Store word in $s0 in mem_addr=$t0_val + 8              |
+| BEQ       | 10000110    | BEQ $s1 $s0 23 <-> if $s1_val == $s0_val then set PC = PC + Signext(23) |
+| BNE       | 10010110    | BNE $s1 $s0 23 <-> if $s1_val != $s0_val then set PC = PC + Signext(23) |
+
+
+Instructions that don't follow any of the above formats are called special instructions, there is 3 special instruction and they follow this format: 
+
+| Special instruction | bits 24-31 | bits 20-23 | bits 16-19 | bits 0-15       |
+|---------------------|------------|------------|------------|-----------------|
+| JR                  | OPCODE     | RD         | DONT CARE  | DONT CARE       |
+| JALR                | OPCODE     | RD         | RS         | DONT CARE       |
+| LUI                 | OPCODE     | RD         | DONT CARE  | Immediate value |
+
+Using special instructions: 
+
+|Instruction| Opcode   | Notes/examples                                     |
+|-----------|----------|----------------------------------------------------|
+| JR        | 0110XXXX | JR $ra, PC = $ra_value                             |
+| JALR      | 0111XXXX | JALR $s0 $ra, $ra_value = PC+1 then PC=$s0_val     |
+| LUI       | 00011100 | LUI $s0 3931, set upper 16 bits of $s0_val to 3931 |
+
+X is a don't care bit. 
+
+Instructions supporting use of labels: 
+
+|Instruction| Notes/examples                                                    |
+|-----------|-------------------------------------------------------------------|
+| J         | J label, PC = instruction_addr(label)                             |
+| JAL       | JAL label, $ra_value = PC+1 then PC= instruction_addr(label)      |
+| BEQL      | BEQL $s1 $s0 label <-> BEQ $s1 $s0 (instruction_addr(label) - PC) |
+| BNEL      | BNEL $s1 $s0 label <-> BNE $s1 $s0 (instruction_addr(label) - PC) |
+
