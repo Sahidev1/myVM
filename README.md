@@ -52,4 +52,4 @@ When both least significant bits are set:
 | 100            | LUI logic                       |
 | 101-111        | DONT CARE (undefined operation) |
 
-![ALU overview](readmefiles.ALU.png)
+![ALU overview](readmefiles/ALU.png)
