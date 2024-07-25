@@ -1,0 +1,67 @@
+ADDI $sp $0 0x3fc
+ADDI $a0 $0 23
+ADDI $a1 $0 37
+OR $a2 $a0 $a1
+JAL pushStack
+AND $a2 $a0 $a1
+JAL pushStack
+XOR $a2 $a0 $a1
+JAL pushStack
+NOR $a2 $a0 $a1
+JAL pushStack
+NAND $a2 $a0 $a1
+JAL pushStack
+ADD $a2 $a0 $a1
+JAL pushStack
+SUB $a2 $a0 $a1
+JAL pushStack
+ADDI $a1 $0 4
+SLL $a2 $a0 $a1
+JAL pushStack
+SRL $a2 $a0 $a1
+JAL pushStack
+SRA $a2 $a0 $a1
+JAL pushStack
+SLT $a2 $a0 $a1
+JAL pushStack
+ADDI $a1 $0 7
+XNOR $a2 $a0 $a1
+JAL pushStack
+MUL $a2 $a0 $a1
+JAL pushStack
+DIV $a2 $a0 $a1
+JAL pushStack
+ORI $a0 $0 'c'
+SB $a0 $sp 0
+ORI $a0 $0 'o'
+SB $a0 $sp 1
+ORI $a0 $0 'o'
+SB $a0 $sp 2
+ORI $a0 $0 'l'
+SB $a0 $sp 3
+SUBI $sp $sp 4
+LB $s1 $sp 4
+JAL popStack
+JAL branch0
+branch0:
+    BEQL $0 $0 someOp
+    SUBI $gp $0 4
+    JR $ra
+LUI $a2 0xabcd 
+ORI $a2 $a2 0xfedc
+JAL pushStack
+J end
+pushStack:
+    SW $a2 $sp 0
+    SUBI $sp $sp 4
+    JR $ra
+popStack:
+    ADDI $sp $sp 4
+    LW $v0 $sp 0
+    JR $ra
+someOp:
+    ADDI $gp $0 7
+    JR $ra
+end:
+    ADDI $s2 $s2 1
+    J end
