@@ -1,4 +1,6 @@
+ADDI $s0 $0 0
 J increment
 increment:
     ADDI $s0 $s0 1
+    J increment
 
