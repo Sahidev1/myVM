@@ -1,12 +1,11 @@
 import argparse
 import re
 
-PC = 0
 INSTRUCTIONS = []
-LABELMAP = {}
-MAXLABELPC = 0
-INSERTFLAG = False
+LABELTOPCMAP = {}
+PC_START_OFFSET = 0
 
+# R-type op codes
 Rops = {
     'OR':'00000000',
     'AND':'00000001',
@@ -24,6 +23,7 @@ Rops = {
     'DIV': '00001110',
 }
 
+#I-type op codes
 Iops = {
     'ORI':'00010000',
     'ANDI':'00010001',
@@ -47,13 +47,26 @@ Iops = {
     'BNE': '10010110',
 }
 
-JopsMSB = {
+# J-type op codes, we exclude 4 LSb's as they are dont care bits, so we only have 4 MSb's
+Jops = {
     'JR':'0110',
     'JALR':'0111',
 }
 
-LabelOps= {'J', 'JAL', 'BEQL', 'BNEL'}
+# special operation type that dont fall in line with R, I, J types
+specOps = {
+    'LUI':'00011100',
+}
 
+# supported label instructions
+labelOps= {'J', 'JAL', 'BEQL', 'BNEL'}
+
+# supported pseudo instructions
+pseudoInstr={
+    'NOP':'SLL $0 $0 $0'
+}
+
+# register map
 regMap = {
     '$0':'0000',
     '$v0': '0001',
@@ -74,173 +87,198 @@ regMap = {
 }
 
 
+# placeholder marker
+PLACEHOLDER_PREFIX = '@'
 
-NOP_CODE = 'SLL $0 $0 $0'
-LUI_OPCODE = '00011100'
+# converts hexadecimals, characters, and integers to integers
+def _typeConverter(immStr: str)->int:
+    if (re.match(r"^0x[1-9a-f][0-9a-f]{0,3}$", immStr)):
+        return int(immStr, 16)
+    if (re.match(r"^'\w'$", immStr)):
+        return ord(immStr.strip("'"))
+    else :
+        return int(immStr)
 
-
-
-def to_32bit(v):
+# hack to ensure that the value is 32 bits
+def _to_32bit(v: int)->int:
     return v & 0xFFFFFFFF
 
-def parseBin(bin):
+# parse binary string to integer
+def _parseBin(bin: str)->int:
     b = bin.lstrip('0')
     if (b == ''): return 0
     return int(b, 2)
 
-def mapToRegV(reg):
-    return parseBin(regMap[reg])
+# map register to binary value
+def _mapToRegV(reg: str)->int:
+    return _parseBin(regMap[reg])
 
-
-def handleLabelOp(instr):
-    iPart = instr.split()
-    lv = 0
-    if (iPart[0] == 'J'):
-        label = iPart[1]
-        lv = LABELMAP[label]
-        assemble_instruction(f'LUI $at {lv>>16}')
-        assemble_instruction(f'ORI $at $at {lv&0xFFFF}')
-        assemble_instruction(f'JR $at')
-    elif (iPart[0] == 'JAL'):
-        label = iPart[1]
-        lv = LABELMAP[label]
-        assemble_instruction(f'LUI $at {lv>>16}')
-        assemble_instruction(f'ORI $at $at {lv&0xFFFF}')
-        assemble_instruction(f'JALR $at $ra')
-    elif (iPart[0] == 'BEQL' or iPart[0] == 'BNEL'):
-        label = iPart[3]
-        lv = LABELMAP[label]
-        offset = lv - PC
-        assemble_instruction(f'{iPart[0]} {iPart[1]} {iPart[2]} {offset}')
-    else :
-        print('instruction: ' + instr.split('\n')[0] + ' is invalid instruction')
-        exit(1)
-
-
-def instructionScanner(instr):
-    iPart = instr.split()
-    if (iPart[0] in LabelOps):
-        handleLabelOp(instr)
+# decompose label instruction and put the decomposed instruction in INSTRUCTIONS array and return updated PC
+def _decomposeInstruction(instr: str, currPC: int) -> int:
+    instrParts = instr.split()
+    if (instrParts[0] in labelOps):
+        if (instrParts[0] == 'J' or instrParts[0] == 'JAL'):
+            INSTRUCTIONS.append(f'{PLACEHOLDER_PREFIX} LUI $at {instrParts[1]}' )
+            INSTRUCTIONS.append(f'{PLACEHOLDER_PREFIX} ORI $at $at {instrParts[1]}')
+            if (instrParts[0] == 'JAL'):
+                INSTRUCTIONS.append(f'JALR $at $ra')
+            else: 
+                INSTRUCTIONS.append(f'JR $at')
+            return currPC + 3
+        if (instrParts[0] == 'BEQL' or instrParts[0] == 'BNEL'):
+            INSTRUCTIONS.append(f'{PLACEHOLDER_PREFIX} {instrParts[0][:-1]} {instrParts[1]} {instrParts[2]} {instrParts[3]}')
+            return currPC + 1
     else:
-        assemble_instruction(instr)
+        if (re.match(r"^\s*\w+:\s*$", instr)):
+            LABELTOPCMAP[instrParts[0][:-1]] = currPC
+            return currPC
+        else:
+            INSTRUCTIONS.append(instr)
+            return currPC + 1
+# decompose instructions and put them in INSTRUCTIONS array
+def _decomposeInstructions(instructions: list) -> None:
+    PC = 0
+    for instr in instructions:
+        PC = _decomposeInstruction(instr.strip() , PC)
 
-def isLabel(instr):
-    return instr.split(':')[0] in LABELMAP
+# evaluate placeholder and replace it with the actual value in the instruction
+def _evaluatePlaceholder(instrPC: int, toReplace: str, replacement: str)->None:
+    instr = INSTRUCTIONS[instrPC].split('@')[1].strip()
+    INSTRUCTIONS[instrPC] = instr.replace(toReplace, replacement)
 
-def assemble_instruction(instr):
+# evaluate placeholders in the instructions
+def _evaluatePlaceholders()->None:
+    for pc in range(len(INSTRUCTIONS)):
+        instr = INSTRUCTIONS[pc]
+        if(re.match(r"^@.*$",instr)):
+            instrParts = instr.split('@')[1].split()
+            if (instrParts[0] == 'LUI'):
+                jPC = LABELTOPCMAP[instrParts[2]] + PC_START_OFFSET
+                _evaluatePlaceholder(pc, instrParts[2], str(jPC>>16))
+            elif (instrParts[0] == 'ORI'):
+                jPC = LABELTOPCMAP[instrParts[3]] + PC_START_OFFSET
+                _evaluatePlaceholder(pc, instrParts[3], str(jPC&0xFFFF))
+            else:
+                jPC = LABELTOPCMAP[instrParts[3]] + PC_START_OFFSET
+                _evaluatePlaceholder(pc, instrParts[3], str(jPC - pc))
+
+# remove instruction at pc
+def _remove_instruction(pc: int)->None:
+    INSTRUCTIONS.pop(pc)
+    for label, pcval in LABELTOPCMAP.items():
+        if (pcval > pc):
+            LABELTOPCMAP[label] = pcval - 1
+
+# jump optimizer, removes LUI instructions if the label is within 16 bit range
+def _jumpOptimizer()->None:
+    pc = 0
+    while pc < len(INSTRUCTIONS):
+        instr = INSTRUCTIONS[pc]
+        if(re.match(r"^@.*$",instr)):
+            instr = instr.split('@')[1]
+            instrParts = instr.split()
+            if (instrParts[0] == 'LUI' and LABELTOPCMAP[instrParts[2]]  +  PC_START_OFFSET < int("0xffff",16)):
+                _remove_instruction(pc)
+                nextParts = INSTRUCTIONS[pc].split()
+                INSTRUCTIONS[pc] = f'@ ORI $at $0 {nextParts[4]}'
+                continue
+        pc += 1
+
+# assemble a non labeled instruction instruction        
+def _assembleInstruction(instr: str)->str:
     iPart = instr.split()
-    hx = to_32bit(0)
-    if (iPart[0] in JopsMSB):
-        hx |= parseBin(JopsMSB[iPart[0]])
-        hx = hx<<8
-        hx |= mapToRegV(iPart[1])
+    hx = _to_32bit(0)
+    if (iPart[0] in Jops):
+        hx |= _parseBin(Jops[iPart[0]])
+        hx <<= 8
+        hx |= _mapToRegV(iPart[1])
         hx <<= 4 
-        hx |= 0 if iPart[0] == 'JR' else mapToRegV(iPart[2])
-        hx = hx<<16
+        hx |= 0 if iPart[0] == 'JR' else _mapToRegV(iPart[2])
+        hx <<=16
     elif (iPart[0] in Iops):
-        hx |= parseBin(Iops[iPart[0]])
+        hx |= _parseBin(Iops[iPart[0]])
         hx <<= 4
-        hx |= mapToRegV(iPart[1])
+        hx |= _mapToRegV(iPart[1])
         hx <<= 4
-        hx |= mapToRegV(iPart[2])
+        hx |= _mapToRegV(iPart[2])
         hx <<= 16
-        hx |= int(iPart[3])
+        hx |= _typeConverter(iPart[3])
     elif(iPart[0] in Rops):
-        hx |= parseBin(Rops[iPart[0]])
+        hx |= _parseBin(Rops[iPart[0]])
         hx <<= 4
-        hx |= mapToRegV(iPart[1])
+        hx |= _mapToRegV(iPart[1])
         hx <<= 4
-        hx |= mapToRegV(iPart[2])
+        hx |= _mapToRegV(iPart[2])
         hx <<= 4
-        hx |= mapToRegV(iPart[3])
+        hx |= _mapToRegV(iPart[3])
         hx <<= 12
-    
-    elif(iPart[0] == 'LUI'):
-        hx |= parseBin(LUI_OPCODE)
+    elif(iPart[0] in specOps):
+        hx |= _parseBin(specOps[iPart[0]])
         hx <<= 4
-        hx |= mapToRegV(iPart[1])
+        hx |= _mapToRegV(iPart[1])
         hx <<= 20
-        hx |= int(iPart[2])
-
-    elif(iPart[0] == 'NOP'):
-        assemble_instruction(NOP_CODE)
-        return
+        hx |= _typeConverter(iPart[2])
+    elif(iPart[0] in pseudoInstr):
+        if (iPart[0] == 'NOP'):
+            hx = _assembleInstruction(pseudoInstr[iPart[0]])
     else :
         print('instruction: ' + instr.split('\n')[0] + ' is invalid instruction')
         exit(1)
-    
+    return f'{hx:08x}'
 
-    hxform = f'{hx:08x}'
-    if (INSERTFLAG):
-        INSTRUCTIONS.insert(0, hxform)
-    else:
-        INSTRUCTIONS.append(hxform)
-    if (mapAsm):
-        print(f'{hxform} : {instr}')
-    global PC
-    PC += 1
+# assemble all instructions
+def _assembleInstructions()->None:
+    for pc in range(len(INSTRUCTIONS)):
+        INSTRUCTIONS[pc] = _assembleInstruction(INSTRUCTIONS[pc])
 
 
-def readLineByLINE(fileName):
-    with open(fileName) as f:
-        lines = f.readlines()
-        return lines
-def readAll(fileName):
-    with open(fileName) as f:
-        lines = f.read()
-        return lines
-    
-def scanLabelInstructions(lines_str):
-    matches = re.findall(r'^\w+:\n(?:\s{4}[\w \$]+\n?)+', lines_str, re.MULTILINE)
-    for match in matches:
-        label = match.split(':')[0]
-        instructions = match.split(':')[1].lstrip().rstrip().split('\n')
-        LABELMAP[label] = PC
-        for instruction in instructions:
-            #print('instr: '+instruction)
-            instructionScanner(instruction)
-    global MAXLABELPC
-    MAXLABELPC = PC
-    
-        
-def scanInstructions(lines):
-    i = 0    
-    while i < len(lines):
-        if (isLabel(lines[i])):
-            i += 1
-            while (i < len(lines) and re.match(r'\s{4}.*', lines[i])):
-                i += 1
+# reads a file line by line and returns a list of lines
+# ignores blank lines and comments
+def _readFileLineByLine(file: str) -> list:
+    file = open(file, 'r')
+    lines = []
+    while True:
+        line = file.readline()
+        if not line:
+            break
+        if (re.match(r"^\s*$", line) or re.match(r"^\s*#", line)):
             continue
-        instructionScanner(lines[i])
-        i += 1 
+        lines.append(line)
+    file.close()
+    return lines
 
+
+
+
+def printInstructions(initMsg: str, mapInst=False)->None:
+    pc = 0
+    print(initMsg)
+    for instr in INSTRUCTIONS:
+        if (mapInst):
+            print(f'PC: {pc + PC_START_OFFSET}, Machinecode: {instr}, Instruction: {instList[pc]}')
+        else:
+            print(instr)
+        pc += 1
+
+# logisim heximage generator below
 
 args = argparse.ArgumentParser()
 args.add_argument('input', help='Input file')
 args.add_argument('-m', action='store_true', help='Check for option -m')
-# i want args parser to check for option -m, please write the code to do it below
 
-mapAsm = False
 args = args.parse_args()
+
+mapInstrToMachineCode = False
+instList = []
 if args.m:
-    mapAsm = True
+    mapInstrToMachineCode = True
 if args.input:
-    lines = readLineByLINE(args.input)
-    lineStr = readAll(args.input)
-    PC += 3
-    scanLabelInstructions(lineStr)
-    scanInstructions(lines)
-    INSERTFLAG = True
-    assemble_instruction(f'JR $at')
-    assemble_instruction(f'ORI $at $at {MAXLABELPC & 0xFFFF}')
-    assemble_instruction(f'LUI $at {MAXLABELPC >> 16}')
+    lines = _readFileLineByLine(args.input)
+    _decomposeInstructions(lines)
+    _jumpOptimizer()
+    _evaluatePlaceholders()
+    if mapInstrToMachineCode:
+        instList = list(INSTRUCTIONS)
+    _assembleInstructions()
 
-    if (not mapAsm):
-        print('v2.0 raw')
-        for instr in INSTRUCTIONS:
-            print(instr)
-
-else :
-    print('No input file provided')
-    exit(1)
-
+    printInstructions('v2.0 raw', mapInstrToMachineCode)

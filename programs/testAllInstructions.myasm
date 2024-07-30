@@ -42,11 +42,9 @@ SB $a0 $sp 3
 SUBI $sp $sp 4
 LB $s1 $sp 4
 JAL popStack
-JAL branch0
-branch0:
-    BEQL $0 $0 someOp
-    SUBI $gp $0 4
-    JR $ra
+BNEL $0 $0 skip
+SUBI $gp $0 4
+skip:
 LUI $a2 0xabcd 
 ORI $a2 $a2 0xfedc
 JAL pushStack
@@ -58,9 +56,6 @@ pushStack:
 popStack:
     ADDI $sp $sp 4
     LW $v0 $sp 0
-    JR $ra
-someOp:
-    ADDI $gp $0 7
     JR $ra
 end:
     ADDI $s2 $s2 1

@@ -1,0 +1,35 @@
+ADDI $sp $0 0xfff
+ADDI $gp $0 0xff
+ADDI $a0 $0 33
+ADDI $a1 $0 30
+branch0:
+JAL checkless
+BEQL $v0 $0 skip
+JAL fun
+ADDI $a1 $a1 1
+J branch0
+skip:
+J end
+end: 
+    J end
+
+
+checkless:
+    SLT $v0 $a1 $a0
+    JR $ra
+
+
+fun:
+    BNEL $a0 $a1 else
+    MUL $a2 $a1 $a1
+    J skipelse
+    else:
+        DIVI $a2 $a1 4
+    skipelse:
+    # store value in mem
+    SW $a2 $gp 0
+    ADDI $gp $gp 4
+    JR $ra
+
+
+    
