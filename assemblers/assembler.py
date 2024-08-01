@@ -1,5 +1,6 @@
 import argparse
 import re
+import traceback
 
 INSTRUCTIONS = []
 LABELTOPCMAP = {}
@@ -56,6 +57,8 @@ Jops = {
 # special operation type that dont fall in line with R, I, J types
 specOps = {
     'LUI':'00011100',
+    'RSPEC': '10100101',
+    'WEPC': '10110101',
 }
 
 # supported label instructions
@@ -63,7 +66,9 @@ labelOps= {'J', 'JAL', 'BEQL', 'BNEL'}
 
 # supported pseudo instructions
 pseudoInstr={
-    'NOP':'SLL $0 $0 $0'
+    'NOP':'SLL $0 $0 $0',
+    'RPPC':'RSPEC $x 0',
+    'REPC':'RSPEC $x 1'
 }
 
 # register map
@@ -213,14 +218,33 @@ def _assembleInstruction(instr: str)->str:
         hx |= _mapToRegV(iPart[3])
         hx <<= 12
     elif(iPart[0] in specOps):
-        hx |= _parseBin(specOps[iPart[0]])
-        hx <<= 4
-        hx |= _mapToRegV(iPart[1])
-        hx <<= 20
-        hx |= _typeConverter(iPart[2])
+        if (iPart[0] == 'LUI'):
+            hx |= _parseBin(specOps[iPart[0]])
+            hx <<= 4
+            hx |= _mapToRegV(iPart[1])
+            hx <<= 20
+            hx |= _typeConverter(iPart[2])
+        elif (iPart[0] == 'WEPC'):
+            hx |= _parseBin(specOps[iPart[0]])
+            hx <<= 4
+            hx |= _mapToRegV(iPart[1])
+            hx <<= 4
+            hx |= _mapToRegV('$0')
+            hx <<= 16
+        elif (iPart[0] == 'RSPEC'):
+            hx |= _parseBin(specOps[iPart[0]])
+            hx <<= 4
+            hx |= _mapToRegV(iPart[1])
+            hx <<= 4
+            hx |= _mapToRegV('$0')
+            hx <<= 16
+            hx |= _typeConverter(iPart[2])
     elif(iPart[0] in pseudoInstr):
         if (iPart[0] == 'NOP'):
             hx = _assembleInstruction(pseudoInstr[iPart[0]])
+        if (iPart[0] == 'REPC' or iPart[0] == 'RPPC'):
+            decInstr = pseudoInstr[iPart[0]].replace('$x', iPart[1])
+            return _assembleInstruction(decInstr)
     else :
         print('instruction: ' + instr.split('\n')[0] + ' is invalid instruction')
         exit(1)
@@ -229,7 +253,12 @@ def _assembleInstruction(instr: str)->str:
 # assemble all instructions
 def _assembleInstructions()->None:
     for pc in range(len(INSTRUCTIONS)):
-        INSTRUCTIONS[pc] = _assembleInstruction(INSTRUCTIONS[pc])
+        try :
+            INSTRUCTIONS[pc] = _assembleInstruction(INSTRUCTIONS[pc])
+        except:
+            print(f'Error at instruction: {INSTRUCTIONS[pc]}')
+            print(traceback.format_exc())
+            exit(1)
 
 
 # reads a file line by line and returns a list of lines

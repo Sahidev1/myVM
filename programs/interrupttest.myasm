@@ -1,0 +1,10 @@
+ADDI $t0 $0 4
+WEPC $t0
+ADDI $s0 $0 41
+ADDI $s1 $0 22
+# interrupt occurs
+MUL $s1 $s1 $s1
+#ISR
+MUL $s0 $s0 $s0
+RPPC $ra
+JR $ra
