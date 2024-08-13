@@ -1,0 +1,15 @@
+{
+    "iconDefinitions": {
+      "myasm-icon": {
+        "iconPath": "./mya.png"
+      }
+    },
+    "fileExtensions": {
+      "myasm": "myasm-icon"
+    },
+    "folderNames": {},
+    "folderNamesExpanded": {},
+    "fileNames": {},
+    "languageIds": {}
+  }
+  

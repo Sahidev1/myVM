@@ -1,0 +1,55 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "myasm",
+	"patterns": [
+		{
+			"name": "keyword",
+			"match": "\\b(OR|AND|XOR|NOR|NAND|ADD|SUB|SLL|SRL|SRA|SLT|XNOR|MUL|DIV)\\b"
+		},
+		{
+			"name": "keyword",
+			"match": "\\b(BNE|BEQ|LW|SW|LB|SB|ORI|ANDI|XORI|NORI|NANDI|ADDI|SUBI|SLLI|SRLI|SRAI|SLTI|XNORI|MULI|DIVI)\\b"
+			
+		},
+		{
+			"name": "keyword",
+			"match":"\\b(LUI|JR|JALR|RPPC|WEPC)\\b"
+		},
+		{
+			"name":"keyword.other.unit",
+			"match": "\\b(J|JAL|BEQL|BNEL)\\b"
+		},
+		{
+			"name":"keyword.control",
+			"match": "(\\$[a-z0-9]+)"
+		},
+		{
+			"name":"comment",
+			"begin": "#",
+			"end": "\n"
+		},
+		{
+			"name": "string.quoted.double",
+			"match": "\".*\""
+		},
+		{
+			"name": "support.class",
+			"match": "(0x[0-9A-Fa-f]+|[0-9]+)"
+		},
+		{
+			"name":"support.class",
+			"match": "'.'"
+		},
+		{
+			"name":"strong",
+			"match": "(\\w+\n)"
+		},
+		{
+			"name":"invalid",
+			"match": "(\\w+:)"
+		}
+
+	],
+	"repository": {},
+	"scopeName": "source.myasm"
+}

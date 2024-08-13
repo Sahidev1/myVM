@@ -1,0 +1,32 @@
+{
+  "name": "myasmsyntaxer",
+  "displayName": "myasmsyntaxer",
+  "description": "Syntax highlighting for MyASM",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "myasmsyntx",
+      "aliases": ["myasm", "myasmsyntx"],
+      "extensions": [".myasm"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "myasmsyntx",
+      "scopeName": "source.myasm",
+      "path": "./syntaxes/myasmsyntx.tmLanguage.json"
+    }],
+    "iconThemes": [{
+      "id": "myasmsyntx",
+      "label": "myasmsyntx",
+      "path": "./fileicons/myasmsyntx-icon-theme.json"
+    }],
+    "colors": []
+  },
+  "icon": "./fileicons/mya.png"
+}

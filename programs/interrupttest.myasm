@@ -8,3 +8,6 @@ MUL $s1 $s1 $s1
 MUL $s0 $s0 $s0
 RPPC $ra
 JR $ra
+
+#wfa 
+
