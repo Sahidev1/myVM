@@ -62,7 +62,7 @@ specOps = {
 }
 
 # supported label instructions
-labelOps= {'J', 'JAL', 'BEQL', 'BNEL'}
+labelOps= {'J', 'JAL', 'BEQL', 'BNEL', 'WPCL'}
 
 # supported pseudo instructions
 pseudoInstr={
@@ -133,6 +133,11 @@ def _decomposeInstruction(instr: str, currPC: int) -> int:
         if (instrParts[0] == 'BEQL' or instrParts[0] == 'BNEL'):
             INSTRUCTIONS.append(f'{PLACEHOLDER_PREFIX} {instrParts[0][:-1]} {instrParts[1]} {instrParts[2]} {instrParts[3]}')
             return currPC + 1
+        if (instrParts[0] == 'WPCL'):
+            INSTRUCTIONS.append(f'{PLACEHOLDER_PREFIX} LUI $at {instrParts[1]}' )
+            INSTRUCTIONS.append(f'{PLACEHOLDER_PREFIX} ORI $at $at {instrParts[1]}')
+            INSTRUCTIONS.append('WEPC $at')
+            return currPC +3
     else:
         if (re.match(r"^\s*\w+:\s*$", instr)):
             LABELTOPCMAP[instrParts[0][:-1]] = currPC

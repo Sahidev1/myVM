@@ -1,12 +1,13 @@
-
+#setting EPC register to isr_route label
+WPCL isr_routine
 # set Tc on timer, Tc: 28LSb on timer confReg register(addr 0x0)
-# if Logisim tickrate is 256Hz --> Rising edge to Rising edge frequency is 128Hz, for 4 second delay set Tc to 512
+# if Logisim tickrate is 256Hz --> Rising edge to Rising edge frequency is 128Hz, for 4 second delay set Tc to 4
 # Timer device addr is IOW2=0x2
-ADDI $s0 $0 0x2 
-SLLI $s0 $s0 26
-ADDI $s1 $0 512
-SW $s1 $s0 0 
-# we've set Tc to 512 on timer now. 
+ADDI $s2 $0 0x2 
+SLLI $s2 $s2 26
+ADDI $s1 $0 4
+SW $s1 $s2 0 
+# we've set Tc to 4 on timer now. 
 
 
 
@@ -15,9 +16,26 @@ SW $s1 $s0 0
 # Write to  Interrupt handler so Timer device is enabled
 # set LSb on status register which has address >=0x3 
 ADDI $s0 $0 0x1 
-SLLI $s0 $s0 26 # set bit position 26
+ # set bit position 26
+SLLI $s0 $s0 26
 # we've set interrupt handler addr
 ADDI $s1 $0 0x1 
 # now setting status register such that timer is enabled, overwriting everything, dont care.
 SW $s1 $s0 0 
 # now timer is on
+
+do_nothing:
+    J do_nothing
+
+isr_routine:
+    #incrementing $v0 register
+    ADDI $v0 $v0 1 
+    
+    # reseting interrupt signal
+    ADDI $t0 $0 4
+    SW $t0 $s2 0 
+
+    #loading pre interrupt PC value
+    RPPC $ra 
+    #jumpting to it
+    JR $ra  
