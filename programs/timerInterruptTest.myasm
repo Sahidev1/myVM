@@ -1,11 +1,11 @@
 #setting EPC register to isr_route label
 WPCL isr_routine
 # set Tc on timer, Tc: 28LSb on timer confReg register(addr 0x0)
-# if Logisim tickrate is 256Hz --> Rising edge to Rising edge frequency is 128Hz, for 4 second delay set Tc to 4
+# if Logisim tickrate is 256Hz --> Rising edge to Rising edge frequency is 128Hz, for 4 second delay set Tc to 512
 # Timer device addr is IOW2=0x2
 ADDI $s2 $0 0x2 
 SLLI $s2 $s2 26
-ADDI $s1 $0 4
+ADDI $s1 $0 512
 SW $s1 $s2 0 
 # we've set Tc to 4 on timer now. 
 
@@ -32,7 +32,7 @@ isr_routine:
     ADDI $v0 $v0 1 
     
     # reseting interrupt signal
-    ADDI $t0 $0 4
+    ADDI $t0 $0 512
     SW $t0 $s2 0 
 
     #loading pre interrupt PC value
