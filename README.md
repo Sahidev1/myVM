@@ -4,6 +4,8 @@ In this project a virtual machine has been created through hardware virtualizati
 
 This repository contains the VM Logisim file as well as an assembler for the VM. 
 
+Note that this project is work in progress. 
+
 # VM logisim architecture
 The virtual machine so far consists of a CPU and a RAM module. The RAM module is a shared instruction and data memory. 
 
