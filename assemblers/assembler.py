@@ -64,11 +64,15 @@ specOps = {
 # supported label instructions
 labelOps= {'J', 'JAL', 'BEQL', 'BNEL', 'WPCL'}
 
+
+#pseudo placeholder
+PSEUDO_IMM_PLACEHOLDER = '£'
 # supported pseudo instructions
 pseudoInstr={
     'NOP':'SLL $0 $0 $0',
     'RPPC':'RSPEC $x 0',
-    'REPC':'RSPEC $x 1'
+    'REPC':'RSPEC $x 1',
+    'LI':''
 }
 
 # register map
@@ -97,7 +101,7 @@ PLACEHOLDER_PREFIX = '@'
 
 # converts hexadecimals, characters, and integers to integers
 def _typeConverter(immStr: str)->int:
-    if (re.match(r"^0x[1-9a-f][0-9a-f]{0,3}$", immStr)):
+    if (re.match(r"^0x[1-9a-f][0-9a-f]{0,7}$", immStr)):
         return int(immStr, 16)
     if (re.match(r"^'\w'$", immStr)):
         return ord(immStr.strip("'"))
@@ -138,6 +142,12 @@ def _decomposeInstruction(instr: str, currPC: int) -> int:
             INSTRUCTIONS.append(f'{PLACEHOLDER_PREFIX} ORI $at $at {instrParts[1]}')
             INSTRUCTIONS.append('WEPC $at')
             return currPC +3
+    elif (instrParts[0] in pseudoInstr):
+        if(instrParts[0] == 'LI'):
+            reg = instrParts[1]
+            imm32 = _typeConverter(instrParts[2])
+            INSTRUCTIONS.append(f'LUI {reg} {imm32 >> 16}')
+            INSTRUCTIONS.append(f'ORI {reg} {reg} {imm32 & 0xFFFF}')
     else:
         if (re.match(r"^\s*\w+:\s*$", instr)):
             LABELTOPCMAP[instrParts[0][:-1]] = currPC

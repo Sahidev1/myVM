@@ -17,7 +17,7 @@
 		},
 		{
 			"name":"keyword.other.unit",
-			"match": "\\b(J|JAL|BEQL|BNEL|WPCL)\\b"
+			"match": "\\b(J|JAL|BEQL|BNEL|WPCL|LI)\\b"
 		},
 		{
 			"name":"keyword.control",
