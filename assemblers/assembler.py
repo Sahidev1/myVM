@@ -142,12 +142,12 @@ def _decomposeInstruction(instr: str, currPC: int) -> int:
             INSTRUCTIONS.append(f'{PLACEHOLDER_PREFIX} ORI $at $at {instrParts[1]}')
             INSTRUCTIONS.append('WEPC $at')
             return currPC +3
-    elif (instrParts[0] in pseudoInstr):
-        if(instrParts[0] == 'LI'):
-            reg = instrParts[1]
-            imm32 = _typeConverter(instrParts[2])
-            INSTRUCTIONS.append(f'LUI {reg} {imm32 >> 16}')
-            INSTRUCTIONS.append(f'ORI {reg} {reg} {imm32 & 0xFFFF}')
+    elif (instrParts[0] in pseudoInstr and instrParts[0] == 'LI'):
+        reg = instrParts[1]
+        imm32 = _typeConverter(instrParts[2])
+        INSTRUCTIONS.append(f'LUI {reg} {imm32 >> 16}')
+        INSTRUCTIONS.append(f'ORI {reg} {reg} {imm32 & 0xFFFF}')
+        return currPC + 2
     else:
         if (re.match(r"^\s*\w+:\s*$", instr)):
             LABELTOPCMAP[instrParts[0][:-1]] = currPC
@@ -193,16 +193,23 @@ def _remove_instruction(pc: int)->None:
 def _jumpOptimizer()->None:
     pc = 0
     while pc < len(INSTRUCTIONS):
-        instr = INSTRUCTIONS[pc]
-        if(re.match(r"^@.*$",instr)):
-            instr = instr.split('@')[1]
-            instrParts = instr.split()
-            if (instrParts[0] == 'LUI' and LABELTOPCMAP[instrParts[2]]  +  PC_START_OFFSET < int("0xffff",16)):
-                _remove_instruction(pc)
-                nextParts = INSTRUCTIONS[pc].split()
-                INSTRUCTIONS[pc] = f'@ ORI $at $0 {nextParts[4]}'
-                continue
+        try:
+            instr = INSTRUCTIONS[pc]
+            if(re.match(r"^@.*$",instr)):
+                instr = instr.split('@')[1]
+                instrParts = instr.split()
+                if (instrParts[0] == 'LUI' and LABELTOPCMAP[instrParts[2]]  +  PC_START_OFFSET < int("0xffff",16)):
+                    _remove_instruction(pc)
+                    nextParts = INSTRUCTIONS[pc].split()
+                    INSTRUCTIONS[pc] = f'@ ORI $at $0 {nextParts[4]}'
+                    continue
+        except:
+            print(f'Jump optimizer error at instruction: {instr}, at PC: {pc}')
+            printInstructions("instr snapshot" )
+            print(traceback.format_exc())
+            exit(1)
         pc += 1
+        
 
 # assemble a non labeled instruction instruction        
 def _assembleInstruction(instr: str)->str:
@@ -256,7 +263,7 @@ def _assembleInstruction(instr: str)->str:
             hx |= _typeConverter(iPart[2])
     elif(iPart[0] in pseudoInstr):
         if (iPart[0] == 'NOP'):
-            hx = _assembleInstruction(pseudoInstr[iPart[0]])
+            return _assembleInstruction(pseudoInstr['NOP'])
         if (iPart[0] == 'REPC' or iPart[0] == 'RPPC'):
             decInstr = pseudoInstr[iPart[0]].replace('$x', iPart[1])
             return _assembleInstruction(decInstr)

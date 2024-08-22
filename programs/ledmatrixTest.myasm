@@ -1,2 +1,85 @@
 
-ORI $s0 $0 0xffff1231
+WPCL isr_routine
+# set Tc on timer, Tc: 28LSb on timer confReg register(addr 0x0)
+# if Logisim tickrate is 256Hz --> Rising edge to Rising edge frequency is 128Hz, for 1 second delay set Tc to 128
+# Timer device addr is IOW2=0x2
+ADDI $t0 $0 0x2 
+SLLI $t0 $t0 26
+ADDI $t1 $0 128
+SW $t1 $t0 0 
+
+# Interrupt handler 6MSb(bit 26-31) is IOW1 = 0x1.
+# Write to  Interrupt handler so Timer device is enabled
+# set LSb on status register which has address >=0x3 
+ADDI $t0 $0 0x1
+ # set bit position 26
+SLLI $t0 $t0 26
+# we've set interrupt handler addr
+ADDI $t1 $0 0x1 
+# now setting status register such that timer is enabled, overwriting everything, dont care.
+SW $t1 $t0 0 
+# now timer is on
+
+
+
+
+# Setting device address to Ledmatrix
+ADDI $a0 $0 0x3 
+SLLI $a0 $a0 26 
+
+# setting ledmatrix addr to BUS 1
+ORI $a0 $a0 1
+# $a0 is global, dont change it
+
+# mmatrix bus 1 data
+ORI $s0 $0 1
+# branch conditions
+ADDI $v0 $0 1 
+
+main:
+    BEQL $s2 $v0 handle_timeout  
+    NOP 
+    J main
+handle_timeout: 
+    JAL clear_matrix
+    JAL update_matrix_buff
+    JAL render_matrix
+    #reset branch conditions
+    ADDI $s2 $0 0 
+    J main
+
+
+update_matrix_buff: 
+    ADDI $s0 $s0 1
+    SW $s0 $a0 0
+    JR $ra
+
+clear_matrix:
+    NORI $t0 $0 0x1 
+    AND $t0 $a0 $t0
+    # writing to this specific addr will clear LED matrix
+    ORI $t0 $t0 0x10
+    SW $0 $t0 0
+    JR $ra
+
+render_matrix:
+    NORI $t0 $0 0x1 
+    AND $t0 $a0 $t0
+    # writing to this specific addr will render buffer to matrix
+    ORI $t0 $t0 0x8 
+    SW $0 $t0 0
+    JR $ra
+
+isr_routine:
+    #set s2
+    ADDI $s2 $0 1
+
+    ADDI $t0 $0 0x2 
+    SLLI $t0 $t0 26
+
+    #reset timer
+    ADDI $t1 $0 128
+    SW $t1 $t0 0
+
+    RPPC $ra
+    JR $ra    
