@@ -1,0 +1,49 @@
+
+# "hello world!" byte sequence: 21646c72 6f77206f 6c6c6568
+
+
+#Enabling TTY device
+ADDI $t0 $0 0x1
+SLLI $t0 $t0 26
+# enabling tty
+ADDI $a0 $0 0x8
+SW $a0 $t0 0 
+
+LI $s0 0x6c6c6568
+LI $s1 0x6f77206f
+LI $s2 0x21646c72
+
+#word size
+ORI $a1 $0 4
+# tty device addr
+LI $a0 0x4
+SLLI $a0 $a0 26 
+
+# word
+OR $a2 $0 $s0
+JAL write_chars_in_word
+OR $a2 $0 $s1
+JAL write_chars_in_word
+OR $a2 $0 $s2
+JAL write_chars_in_word
+
+end:
+    J end 
+
+
+
+
+
+write_chars_in_word:
+    ADDI $t0 $0 0
+    ADDI $t1 $0 4
+
+    writebyte:
+    BEQL $t0 $t1 finished
+    SW $a2 $a0 0
+    SRLI $a2 $a2 8
+    ADDI $t0 $t0 1
+    J writebyte
+
+    finished:
+        JR $ra

@@ -9,13 +9,13 @@ ADDI $t1 $0 128
 SW $t1 $t0 0 
 
 # Interrupt handler 6MSb(bit 26-31) is IOW1 = 0x1.
-# Write to  Interrupt handler so Timer device is enabled
+# Write to  Interrupt handler so Timer device and LedInterface is enabled
 # set LSb on status register which has address >=0x3 
 ADDI $t0 $0 0x1
  # set bit position 26
 SLLI $t0 $t0 26
 # we've set interrupt handler addr
-ADDI $t1 $0 0x1 
+ADDI $t1 $0 0x5
 # now setting status register such that timer is enabled, overwriting everything, dont care.
 SW $t1 $t0 0 
 # now timer is on
