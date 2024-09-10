@@ -1,5 +1,7 @@
 # myVM
 
+NOTE: THIS PROJECT SUFFERS FROM MAJOR DOCUMENTATION BACKLOG.
+
 In this project a virtual machine has been created through hardware virtualization using Logisim, a digital logic simulator software. An assembly language has also been designed for VM.
 
 This repository contains the VM Logisim file as well as an assembler for the VM. 
