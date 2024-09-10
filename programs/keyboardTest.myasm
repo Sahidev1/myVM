@@ -1,0 +1,50 @@
+
+WPCL isr_routine
+
+# Loading interrupt device addr in t0
+ADDI $t0 $0 0x1
+SLLI $t0 $t0 26
+
+# Loading keyboard enable code and tty
+ADDI $a0 $0 0xa
+#enabling it
+SW $a0 $t0 0
+
+
+#mem addr
+LI $sp 0x1000
+
+# TTY DEVICE addr saved
+LI $a0 0x4
+SLLI $a0 $a0 26
+
+
+# keyboard DEVICE addr saved 
+LI $a1 0x5 
+SLLI $a1 $a1 26
+
+
+endless_loop:
+    J endless_loop
+
+
+isr_routine:
+    #read char
+    LW $t0 $a1 0
+    #write word to tty
+    SW $t0 $a0 0
+
+    RPPC $ra 
+
+    #handle cpu interrupt
+    ADDI $t0 $0 0x1
+    SW $t0 $a1 0
+
+    JR $ra
+    
+
+
+
+
+
+
