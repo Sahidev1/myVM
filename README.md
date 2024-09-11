@@ -17,7 +17,7 @@ Virtual machine systems top level user interface overview:
 ![top level overview](readmefiles/Main.png)
 
 ## Virtual Computer
-
+The computer has memory mapped IO. So depending on the memory address used in load and store instructions different devices will be accessed, the 6 MSb of the memory address determines the device to access and the 26 LSb is a data address on the device. Note that not all devices have 2^26 addressable data segments, you need to know device specific valid memory addresses.  
 
 ## CPU
 The CPU is a 32bit CPU. 
