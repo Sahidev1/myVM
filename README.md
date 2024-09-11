@@ -14,6 +14,10 @@ The virtual machine so far consists of a CPU and a RAM module. The RAM module is
 The virtual machine system consists of a virtual computer and 3 IO devices. The IO devices are a logisim keyboard used for reading input, a logisim TTY to print characters, and a logisim led matrix. The virtual computer consists of a
 CPU, RAM module, Interrupt Register, A built in timer, and interfaces for the 3 IO devices of the virtual system. The RAM module is shared instruction and data memory. 
 
+Virtual machine systems top level user interface overview:
+
+![top level overview](readmefiles/Main.png)
+
 ## CPU
 The CPU is a 32bit CPU. 
 
