@@ -32,16 +32,20 @@ Below is an overview of the Virtual Computer.
 
 ## CPU
 The CPU is a 32bit CPU. 
+The CPU has two stages, instruction fetch and instruction execution. In the instruction fetch stage the CPU fetches the next instruction at the memory address given by the Program Counter(PC) and stores it in the instruction register, this takes one clock cycle. The next stage is executing the fetched instruction, this takes one clock cycle as well. Thus to fetch and execute an instruction takes two clock cycles. 
 
-Below is an overview of the CPU and RAM module. At this point the RAM module and CPU or in a common circuit module.
+Beside the ALU input registers the CPU also has special registers which are meant to be utilized for the purpose of CPU interrupt signal handling. You can set one of the special registers to the Interrupt service routine instruction memory address.
+When an interrupt occurs PC is set to the ISR instruction memory address, the PRE interrupt PC is saved in a special register. The ISR routine handles the interrupt and then resets the interrupt flag in the interrupt device, loads the pre interrupt PC into a register and jumps back to it resuming program execution. 
+
+Below is an overview of the CPU module.
 ![CPU overview](readmefiles/CPU.png)
 
 ### registers
-The CPU consists of 16 32 bit registers. All registers can be read and written to. Which register to  read or write to is determined by the instruction registry decoder. The registry decoder decodes the RD (Destination Register) for writes, and the RS (Source register) and RT(Target register) for reads. 
+The CPU consists of 16 32 bit registers. All registers can be read and written to, except for the zero register which can only be read from. Which register to  read or write to is determined by the instruction registry decoder. The registry decoder decodes the RD (Destination Register) for writes, and the RS (Source register) and RT(Target register) for reads. 
 The read RS and RT register value are output by the registers module. 
 ![registers overview](readmefiles/registers.png)
 ### ALU
-The CPU consists of one 32bit ALU that can perform basic logic and arithmetic operations. All operations except for multiplication and division is a 32bit operations, the aforementioned operations are only support in 16 bits. The ALU takes in two 32bit inputs, performans an operation and outputs the result as a 32bit value. The ALU also outputs zero and carry flags. The zero flag is used for branch instructions. The carry flag has no use so far. The ALU takes in a 5 bit opcode value and what operation value is output by the ALU is determined by the opcode. 
+The CPU consists of one 32bit ALU that can perform basic logic and arithmetic operations. All operations except for multiplication and division is a 32bit operations, the aforementioned operations are only supported in 16 bits. The ALU takes in two 32bit inputs, performans an operation and outputs the result as a 32bit value. The ALU also outputs zero and carry flags. The zero flag is used for branch instructions. The carry flag has no use so far. The ALU takes in a 5 bit opcode value and what operation value is output by the ALU is determined by the opcode. 
 
 
 Below is the effects of the two least significant bits of the ALU opcode:
