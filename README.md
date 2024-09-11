@@ -21,7 +21,12 @@ The computer has memory mapped IO. So depending on the memory address used in lo
 
 All memory mapped IO devices except for the TTY interface supports both write and store operations, the TTY interface only supports write operations. 
 
-The B-RAM module is the RAM module, it can perform read/write operations on a WORD/BYTE on a specifc memory address. 
+The B-RAM module is the RAM module, it can perform read/write operations on a WORD/BYTE on a specifc memory address. The computer uses this RAM module as a shared instruction and data memory. 
+
+The interrupt device is used for enabling/disabling the timer and IO interfaces, it also handles interrupt signals from the timer and keyboard interface and sends along the interrupt signal to the CPU if the devices are enabled. The only IO devices that can cause interrupts is the timer and keyboard interface. 
+
+Below is an overview of the Virtual Computer. 
+![Virtual computer overview](readmefiles/computer.png)
 
 
 
