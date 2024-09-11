@@ -35,7 +35,7 @@ The CPU is a 32bit CPU.
 The CPU has two stages, instruction fetch and instruction execution. In the instruction fetch stage the CPU fetches the next instruction at the memory address given by the Program Counter(PC) and stores it in the instruction register, this takes one clock cycle. The next stage is executing the fetched instruction, this takes one clock cycle as well. Thus to fetch and execute an instruction takes two clock cycles. 
 
 Beside the ALU input registers the CPU also has special registers which are meant to be utilized for the purpose of CPU interrupt signal handling. You can set one of the special registers to the Interrupt service routine instruction memory address.
-When an interrupt occurs PC is set to the ISR instruction memory address, the PRE interrupt PC is saved in a special register. The ISR routine handles the interrupt and then resets the interrupt flag in the interrupt device, loads the pre interrupt PC into a register and jumps back to it resuming program execution. 
+When an interrupt occurs PC is set to the ISR instruction memory address, the pre-interrupt PC is automatically saved in a special register. The ISR routine handles the interrupt and then resets the interrupt flag in the interrupt device, loads the pre interrupt PC into a register and jumps back to it resuming program execution. 
 
 Below is an overview of the CPU module.
 ![CPU overview](readmefiles/CPU.png)
