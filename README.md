@@ -2,7 +2,7 @@
 
 NOTE: THIS PROJECT SUFFERS FROM MAJOR DOCUMENTATION BACKLOG.
 
-In this project a virtual machine has been created through hardware virtualization using Logisim, a digital logic simulator software. An assembly language has also been designed for VM.
+In this project a virtual machine has been created through hardware virtualization using Logisim, a digital logic simulator software. An assembly language has also been designed for the VM.
 
 This repository contains the VM Logisim file as well as an assembler for the VM. 
 
@@ -10,6 +10,9 @@ Note that this project is work in progress.
 
 # VM logisim architecture
 The virtual machine so far consists of a CPU and a RAM module. The RAM module is a shared instruction and data memory. 
+
+The virtual machine system consists of a virtual computer and 3 IO devices. The IO devices are a logisim keyboard used for reading input, a logisim TTY to print characters, and a logisim led matrix. The virtual computer consists of a
+CPU, RAM module, Interrupt Register, A built in timer, and interfaces for the 3 IO devices of the virtual system. 
 
 ## CPU
 The CPU is a 32bit CPU. 
