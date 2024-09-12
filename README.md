@@ -86,7 +86,7 @@ Below is the register mapping:
 
 | Name | Number | Description                                                            |
 |------|--------|------------------------------------------------------------------------|
-| $0   | 0      | Zero register (recommended to always keep this register at constant 0) |
+| $0   | 0      | Zero register (read only, is always zerp)                              |
 | $v0  | 1      | Return value register, put function return value in this register      |
 | $v1  | 2      | *                                                                      |
 | $a0  | 3      | Argument register, put arguments to function calls here                |
@@ -103,7 +103,7 @@ Below is the register mapping:
 | $fp  | 14     | frame pointer                                                          |
 | $ra  | 15     | Return address, holds return address after function call               |
 
-Note that these 16 registers are essentially general purpose, you can use them as you want but above is the standard way of using them. If you use them differently might've have to alter assembler or use no labels. 
+Note that these 16 registers ,except for the zero register, are essentially general purpose, you can use them as you want but above is the standard way of using them. If you use them differently might've have to alter assembler or use no labels. 
 
 R type instructions follow this format: 
 
@@ -177,6 +177,11 @@ Using special instructions:
 | JR        | 0110XXXX | JR $ra, PC = $ra_value                             |
 | JALR      | 0111XXXX | JALR $s0 $ra, $ra_value = PC+1 then PC=$s0_val     |
 | LUI       | 00011100 | LUI $s0 3931, set upper 16 bits of $s0_val to 3931 |
+| RSPEC     | 10100101 | RSPEC $s0 0, read special register 0 value into s0 |
+| WEPC      | 10110101 | WEPC $s0, write in EPC register in special registers |
+
+RSPEC is only valid for the immediate values 0 and 1 since there's only two special registers. 
+For RSPEC operations it is recommended to use the pseudo instructions equivalents instead. 
 
 X is a don't care bit. 
 
