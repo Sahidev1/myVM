@@ -77,6 +77,7 @@ When both least significant bits are set:
 | 100            | LUI logic                       |
 | 101-111        | DONT CARE (undefined operation) |
 
+Below is an image of the ALU circuit.
 ![ALU overview](readmefiles/ALU.png)
 
 
@@ -209,8 +210,16 @@ Supported pseudo instructions:
 
 $x is an arbitrary register. 
 
-#Memory mapped IO
+# Memory mapped IO
 
+|Device| Device address, 6 MSb of memory address| valid device address range|
+|------|----------------------------------------|---------------------------|
+|RAM| 0x0| 0x0 - 0x02000000 |
+|Interrupt handler| 0x1 | 
+|Timer| 0x2|
+|Led matrix interface| 0x3|
+|TTY interface | 0x4|
+|Keyboard interface| 0x5|
 
 
 
