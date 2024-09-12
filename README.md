@@ -212,14 +212,27 @@ $x is an arbitrary register.
 
 # Memory mapped IO
 
-|Device| Device address, 6 MSb of memory address| valid device address range|
-|------|----------------------------------------|---------------------------|
+|Device| Device address, 6 MSb of memory address| valid device address range, 26 LSb of memory address|
+|------|----------------------------------------|-----------------------------------------------------|
 |RAM| 0x0| 0x0 - 0x02000000 |
-|Interrupt handler| 0x1 | 
-|Timer| 0x2|
-|Led matrix interface| 0x3|
-|TTY interface | 0x4|
-|Keyboard interface| 0x5|
+|Interrupt handler| 0x1 | DONT CARE, since the device only has one register
+|Timer| 0x2| DONT CARE |
+|Led matrix interface| 0x3| 0x0-0x7 |
+|TTY interface | 0x4| DONT CARE|
+|Keyboard interface| 0x5| DONT CARE |
 
+# Device communications
 
+## Interrupt handler
 
+The interrupt handler allows enabling the timer, keyboard, matrix and TTY devices. It also handles interrupt signals from the timer and keyboard. It has one internal register which keeps track of enabled devices and interrupts, this register can be read and written too. The 2 LSB of the register is used for device enable/disable flags. The 2 MSB is used for device interrupt signals. Specific bitindexes are associated with specific devices.
+
+Below is a table of register bitindexes for enable flags and their associated devices.
+|bitIndex(Least significant to most significant)|Device enable/disable|
+|--------|---------------------|
+|0|Timer|
+|1|Keyboard|
+|2|Matrix|
+|3|TTY|
+
+To enable a device set the associated bitIndex, to disable a device clear the associated bitIndex. 
