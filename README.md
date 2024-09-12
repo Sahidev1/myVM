@@ -206,3 +206,8 @@ Supported pseudo instructions:
 |RPPC| reads value in pre-interrupt register, evaluates to: RSPEC $x 0 |
 |REPC| reads value in ISR address register, evaluates to: RSPEC $x 1 |
 |LI  | Loads an immediate 32bit value into a register, use: LI $x 32bit_immediate |
+
+$x is an arbitrary register. 
+
+
+
