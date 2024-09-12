@@ -236,3 +236,15 @@ Below is a table of register bitindexes for enable flags and their associated de
 |3|TTY|
 
 To enable a device set the associated bitIndex, to disable a device clear the associated bitIndex. 
+
+|bitIndex| Device interrupt flag |
+|--------|-------------------------|
+|16      | Timer interrupt flag |
+|17      | Keyboard interrupt flag| 
+
+On interrupts from devices these flags are set, and if the devices are enabled the interrupt signal is forwarded to the CPU.
+To disable a device interrupt clear the associated bitindex. 
+
+How to comminate with device in a nutshell: read data from the devices memory address into a register, perform neccesarry bit manipulations and write it back to the device. 
+
+
