@@ -178,12 +178,15 @@ Using special instructions:
 | JALR      | 0111XXXX | JALR $s0 $ra, $ra_value = PC+1 then PC=$s0_val     |
 | LUI       | 00011100 | LUI $s0 3931, set upper 16 bits of $s0_val to 3931 |
 | RSPEC     | 10100101 | RSPEC $s0 0, read special register 0 value into s0 |
-| WEPC      | 10110101 | WEPC $s0, write in EPC register in special registers |
-
-RSPEC is only valid for the immediate values 0 and 1 since there's only two special registers. 
-For RSPEC operations it is recommended to use the pseudo instructions equivalents instead. 
+| WEPC      | 10110101 | WEPC $s0, write value in $s0 into special EPC register|
 
 X is a don't care bit. 
+
+RSPEC is only valid for the immediate values 0 and 1 since there's only two special registers. 
+For RSPEC and WEPC operations it is recommended to use the pseudo instructions equivalents instead. 
+
+WEPC must be set to an ISR instructions address if CPU interrupts are expected. RSPEC instruction can used to read
+pre interrupt PC.
 
 Instructions supporting use of labels: 
 
@@ -193,4 +196,13 @@ Instructions supporting use of labels:
 | JAL       | JAL label, $ra_value = PC+1 then PC= instruction_addr(label)      |
 | BEQL      | BEQL $s1 $s0 label <-> BEQ $s1 $s0 (instruction_addr(label) - PC) |
 | BNEL      | BNEL $s1 $s0 label <-> BNE $s1 $s0 (instruction_addr(label) - PC) |
+| WPCL      | WPCL label <-> WEPC = instruction_addr(label)| 
 
+Supported pseudo instructions:
+
+|Pseudo instruction | Notes/Examples |
+|-------------------|----------------|
+|NOP | Do nothing for once instruction cycle, evaluates to: SLL $0 $0 $0 |
+|RPPC| reads value in pre-interrupt register, evaluates to: RSPEC $x 0 |
+|REPC| reads value in ISR address register, evaluates to: RSPEC $x 1 |
+|LI  | Loads an immediate 32bit value into a register, use: LI $x 32bit_immediate |
