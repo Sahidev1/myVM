@@ -266,5 +266,10 @@ To use the keyboard device and allow it to cause CPU interrupts you need to enab
 When the device is enabled and a key press occurs, the byte associated to the character is saved in a register and can be read from the device as a 32 bit value where the LSB is the character byte ASCII value. To disable the device interrupt write to it with data were the LSb is set. 
 
 ## Led matrix interface
+To use this device first enable it from the interrupt handler. This device does not cause interrupts. 
 
+The Led matrix interface contains a 256 bit frame buffer for the led matrix, as well as a 256 pre-render buffer.
 
+To write to the pre-render buffer then write to device memory addresses 0x0 to 0x7. Each of these addresses contain the pre-render buffer for a two column and 16 row LED segment in a 32bit register, the 2 LSB map to the first column from left to right on the LED matrix, and the 2 MSB map to the second column. The bottom row in a column maps to the least significant 16bit segment of the pre-render buffer. The LED matrix column addressing goes from left to right. 
+
+To render, essentially write over the data from pre-buffer to frame buffer, write to the device with the device addresses 4th bit set. To clear the frame buffer, write to the device with the device addresses 5th bit set. This is a hacky way of controlling the device, but it does the job.
