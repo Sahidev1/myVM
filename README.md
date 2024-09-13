@@ -247,4 +247,24 @@ To disable a device interrupt clear the associated bitindex.
 
 How to comminate with device in a nutshell: read data from the devices memory address into a register, perform neccesarry bit manipulations and write it back to the device. 
 
+## Timer
+To use the timer and to allow the timer device to cause CPU interrupts you need to first enable it from the interrupt handler device. 
+
+The timer has one read/write configuration register (confReg) and one internal 28bit counter. The 28 LSb of confreg contains the value which when counter equals triggers a time-out, interrupt signal. Any write operations to confreg will automatically reset the internal counter. 
+
+How timer delay is calculated:
+
+$T_d = T_c/(Tick_{freq}/2)$ , where $T_d$ is timer delay, $T_c$ is 28 LSb of confReg, and $Tick_{freq}$ is the logisim simulator tickrate, in one tickrate one clock cycle phase transition occurs. 
+
+When an interrupt occurs the MSb of confreg, interrupt flag, is set. To disable an interrupt and reset counter clear the MSb of confreq. 
+
+Important: Set the 28 LSb of confreg to desired value first before enabling the device from the interrupt handler, otherwise it will cause an immediate interrupt.
+
+## Keyboard device 
+To use the keyboard device and allow it to cause CPU interrupts you need to enable it from the interrupt handler. 
+
+When the device is enabled and a key press occurs, the byte associated to the character is saved in a register and can be read from the device as a 32 bit value where the LSB is the character byte ASCII value. To disable the device interrupt write to it with data were the LSb is set. 
+
+## Led matrix interface
+
 
