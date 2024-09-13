@@ -4,7 +4,6 @@ In this project a virtual machine has been created through hardware virtualizati
 
 This repository contains the VM Logisim file as well as an assembler for the VM. 
 
-Note that this project is work in progress. 
 
 # VM logisim architecture
 The virtual machine system consists of a virtual computer and 3 IO devices. The IO devices are a logisim keyboard used for reading input, a logisim TTY to print characters, and a logisim led matrix. The virtual computer consists of a
@@ -170,6 +169,8 @@ Instructions that don't follow any of the above formats are called special instr
 | JR                  | OPCODE     | RD         | DONT CARE  | DONT CARE       |
 | JALR                | OPCODE     | RD         | RS         | DONT CARE       |
 | LUI                 | OPCODE     | RD         | DONT CARE  | Immediate value |
+| RSPEC | OPCODE | RD| DONT CARE| Immediate value|
+|WEPC | OPCODE | RD | DONT CARE| DONT CARE|
 
 Using special instructions: 
 
