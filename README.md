@@ -273,3 +273,10 @@ The Led matrix interface contains a 256 bit frame buffer for the led matrix, as 
 To write to the pre-render buffer then write to device memory addresses 0x0 to 0x7. Each of these addresses contain the pre-render buffer for a two column and 16 row LED segment in a 32bit register, the 2 LSB map to the first column from left to right on the LED matrix, and the 2 MSB map to the second column. The bottom row in a column maps to the least significant 16bit segment of the pre-render buffer. The LED matrix column addressing goes from left to right. 
 
 To render, essentially write over the data from pre-buffer to frame buffer, write to the device with the device addresses 4th bit set. To clear the frame buffer, write to the device with the device addresses 5th bit set. This is a hacky way of controlling the device, but it does the job.
+
+## TTY interface
+To use this device first enable it from the interrupt handler. This device does not cause interrupts. This device supports write only, reading from it is undefined operation. 
+
+Write the character you want to display on TTY. You write one character at a time, put the character byte in LSB of data before writing it to the device. 
+
+This implementation is extremely basic and not ideal, a rework in the future is probable. 
